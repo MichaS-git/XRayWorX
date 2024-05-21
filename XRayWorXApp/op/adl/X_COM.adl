@@ -1,0 +1,660 @@
+
+file {
+	name="C:\epics\inst-7.0.6\XRayWorX\XRayWorXApp\op\adl\X_COM.adl"
+	version=030109
+}
+display {
+	object {
+		x=2090
+		y=148
+		width=309
+		height=680
+	}
+	clr=14
+	bclr=4
+	cmap=""
+	gridSpacing=5
+	gridOn=0
+	snapToGrid=0
+}
+"color map" {
+	ncolors=65
+	colors {
+		ffffff,
+		ececec,
+		dadada,
+		c8c8c8,
+		bbbbbb,
+		aeaeae,
+		9e9e9e,
+		919191,
+		858585,
+		787878,
+		696969,
+		5a5a5a,
+		464646,
+		2d2d2d,
+		000000,
+		00d800,
+		1ebb00,
+		339900,
+		2d7f00,
+		216c00,
+		fd0000,
+		de1309,
+		be190b,
+		a01207,
+		820400,
+		5893ff,
+		597ee1,
+		4b6ec7,
+		3a5eab,
+		27548d,
+		fbf34a,
+		f9da3c,
+		eeb62b,
+		e19015,
+		cd6100,
+		ffb0ff,
+		d67fe2,
+		ae4ebc,
+		8b1a96,
+		610a75,
+		a4aaff,
+		8793e2,
+		6a73c1,
+		4d52a4,
+		343386,
+		c7bb6d,
+		b79d5c,
+		a47e3c,
+		7d5627,
+		58340f,
+		99ffff,
+		73dfff,
+		4ea5f9,
+		2a63e4,
+		0a00b8,
+		ebf1b5,
+		d4db9d,
+		bbc187,
+		a6a462,
+		8b8239,
+		73ff6b,
+		52da3b,
+		3cb420,
+		289315,
+		1a7309,
+	}
+}
+oval {
+	object {
+		x=66
+		y=97
+		width=20
+		height=20
+	}
+	"basic attribute" {
+		clr=15
+	}
+	"dynamic attribute" {
+		vis="if not zero"
+		calc="A"
+		chan="$(P):XrayOnOff_RBV"
+	}
+}
+oval {
+	object {
+		x=66
+		y=97
+		width=20
+		height=20
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="if zero"
+		calc="A"
+		chan="$(P):XrayOnOff_RBV"
+	}
+}
+rectangle {
+	object {
+		x=84
+		y=7
+		width=105
+		height=21
+	}
+	"basic attribute" {
+		clr=2
+	}
+}
+text {
+	object {
+		x=0
+		y=7
+		width=269
+		height=25
+	}
+	"basic attribute" {
+		clr=54
+	}
+	textix="X-COM"
+	align="horiz. centered"
+}
+"message button" {
+	object {
+		x=96
+		y=62
+		width=70
+		height=20
+	}
+	control {
+		chan="$(P):Initialize"
+		clr=14
+		bclr=51
+	}
+	label="Initialize"
+	press_msg="1"
+}
+"message button" {
+	object {
+		x=181
+		y=62
+		width=70
+		height=20
+	}
+	control {
+		chan="$(P):connection"
+		clr=14
+		bclr=51
+	}
+	label="-"
+	press_msg="0"
+}
+text {
+	object {
+		x=127
+		y=37
+		width=90
+		height=20
+	}
+	"basic attribute" {
+		clr=60
+	}
+	"dynamic attribute" {
+		vis="if not zero"
+		calc="A"
+		chan="$(P):Initialize_RBV"
+	}
+	textix="Initialized"
+	align="horiz. centered"
+}
+text {
+	object {
+		x=127
+		y=37
+		width=90
+		height=20
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="if zero"
+		calc="A"
+		chan="$(P):Initialize_RBV"
+	}
+	textix="Not Initialized"
+	align="horiz. centered"
+}
+"text update" {
+	object {
+		x=60
+		y=462
+		width=120
+		height=20
+	}
+	monitor {
+		chan="$(P):Head"
+		clr=14
+		bclr=4
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=5
+		y=462
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Head"
+}
+text {
+	object {
+		x=5
+		y=487
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Target"
+}
+"text update" {
+	object {
+		x=60
+		y=487
+		width=120
+		height=20
+	}
+	monitor {
+		chan="$(P):Target"
+		clr=14
+		bclr=4
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=5
+		y=512
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Mode"
+}
+"text update" {
+	object {
+		x=60
+		y=512
+		width=120
+		height=20
+	}
+	monitor {
+		chan="$(P):Mode"
+		clr=14
+		bclr=4
+	}
+	format="string"
+	limits {
+	}
+}
+text {
+	object {
+		x=5
+		y=97
+		width=50
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	"dynamic attribute" {
+		chan="$(P):connection"
+	}
+	textix="X-RAY"
+}
+"message button" {
+	object {
+		x=96
+		y=97
+		width=70
+		height=20
+	}
+	control {
+		chan="$(P):XrayOnOff"
+		clr=14
+		bclr=51
+	}
+	label="ON"
+	press_msg="1"
+}
+text {
+	object {
+		x=5
+		y=402
+		width=80
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="StartUp State"
+}
+text {
+	object {
+		x=101
+		y=402
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=17
+	}
+	"dynamic attribute" {
+		vis="calc"
+		calc="A=0"
+		chan="$(P):StartUpState"
+	}
+	textix="Ok"
+}
+text {
+	object {
+		x=101
+		y=402
+		width=100
+		height=20
+	}
+	"basic attribute" {
+		clr=17
+	}
+	"dynamic attribute" {
+		vis="calc"
+		calc="A=1"
+		chan="$(P):StartUpState"
+	}
+	textix="Acknowledged"
+}
+"message button" {
+	object {
+		x=181
+		y=97
+		width=70
+		height=20
+	}
+	control {
+		chan="$(P):XrayOnOff"
+		clr=14
+		bclr=51
+	}
+	label="OFF"
+	press_msg="0"
+}
+text {
+	object {
+		x=101
+		y=402
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=30
+	}
+	"dynamic attribute" {
+		vis="calc"
+		calc="A=2"
+		chan="$(P):StartUpState"
+	}
+	textix="Busy"
+}
+text {
+	object {
+		x=101
+		y=402
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=31
+	}
+	"dynamic attribute" {
+		vis="calc"
+		calc="A=3"
+		chan="$(P):StartUpState"
+	}
+	textix="Warning"
+}
+text {
+	object {
+		x=101
+		y=402
+		width=40
+		height=20
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="calc"
+		calc="A=4"
+		chan="$(P):StartUpState"
+	}
+	textix="Error"
+}
+text {
+	object {
+		x=5
+		y=157
+		width=105
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="High Voltage [kV]"
+}
+"text entry" {
+	object {
+		x=135
+		y=152
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P):HighVoltageDemand"
+		clr=14
+		bclr=51
+	}
+	format="compact"
+	limits {
+	}
+}
+text {
+	object {
+		x=142
+		y=130
+		width=50
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	"dynamic attribute" {
+		chan="$(P):connection"
+	}
+	textix="Demand"
+	align="horiz. centered"
+}
+text {
+	object {
+		x=211
+		y=130
+		width=50
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	"dynamic attribute" {
+		chan="$(P):connection"
+	}
+	textix="Monitor"
+	align="horiz. centered"
+}
+"text update" {
+	object {
+		x=200
+		y=153
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P):HighVoltageMonitor"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"message button" {
+	object {
+		x=5
+		y=377
+		width=70
+		height=20
+	}
+	control {
+		chan="$(P):StartUp"
+		clr=14
+		bclr=51
+	}
+	label="StartUp"
+	press_msg="1"
+}
+text {
+	object {
+		x=5
+		y=182
+		width=105
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Emission Current [µA]"
+}
+text {
+	object {
+		x=5
+		y=207
+		width=105
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Target Current [µA]"
+}
+text {
+	object {
+		x=5
+		y=232
+		width=105
+		height=20
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Target Power [W]"
+}
+"text entry" {
+	object {
+		x=135
+		y=177
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P):EmissionCurrentDemand"
+		clr=14
+		bclr=51
+	}
+	format="compact"
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=135
+		y=202
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P):TargetCurrentDemand"
+		clr=14
+		bclr=51
+	}
+	format="compact"
+	limits {
+	}
+}
+"text entry" {
+	object {
+		x=135
+		y=227
+		width=60
+		height=20
+	}
+	control {
+		chan="$(P):TargetPowerDemand"
+		clr=14
+		bclr=51
+	}
+	format="compact"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=200
+		y=178
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P):EmissionCurrentMonitor"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=200
+		y=203
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P):TargetCurrentMonitor"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}
+"text update" {
+	object {
+		x=200
+		y=228
+		width=80
+		height=18
+	}
+	monitor {
+		chan="$(P):TargetPowerMonitor"
+		clr=54
+		bclr=4
+	}
+	align="horiz. right"
+	limits {
+	}
+}

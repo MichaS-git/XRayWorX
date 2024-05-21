@@ -1,0 +1,83 @@
+record(bo,		"$(P):Initialize") {
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_INITIALIZE")
+    field(PINI, "NO")
+    field(ZNAM, "Idle")
+    field(ONAM, "Start")
+}
+
+record(bi,    "$(P):Initialize_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_INITIALIZE_RBV")
+    field(ZNAM, "Not Initialized")
+    field(ONAM, "Initialized")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo,		"$(P):StartUp") {
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_START_UP")
+    field(PINI, "NO")
+    field(ZNAM, "Idle")
+    field(ONAM, "Start")
+}
+
+record(mbbi,	"$(P):StartUpState") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_START_UP_STATE")
+    field(PINI, "NO")
+    field(ZRST, "OK")
+    field(ZRVL, "0")
+    field(ONST, "Acknowledged")
+    field(ONVL, "1")
+    field(TWST, "Busy")
+    field(TWVL, "2")
+    field(THST, "Warning")
+    field(THVL, "3")
+    field(FRST, "Error")
+    field(FRVL, "4")
+    field(SCAN, "I/O Intr")
+}
+
+record(bo,		"$(P):XrayOnOff") {
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_XRAY_ONOFF")
+    field(PINI, "NO")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+}
+
+record(bi,    "$(P):XrayOnOff_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_XRAY_ONOFF_RBV")
+    field(ZNAM, "Off")
+    field(ONAM, "On")
+    field(SCAN, "I/O Intr")
+}
+
+record(ai,		"$(P):HighVoltageMonitor")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_HIGH_VOLTAGE_MONITOR")
+    field(PINI, "NO")
+    field(PREC, 3)
+    field(SCAN, "I/O Intr")
+}
+
+record(ai,		"$(P):TargetCurrentMonitor")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_TARGET_CURRENT_MONITOR")
+    field(PINI, "NO")
+    field(PREC, 3)
+    field(SCAN, "I/O Intr")
+}
+
+record(ai,		"$(P):EmissionCurrentMonitor")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_EMISSION_CURRENT_MONITOR")
+    field(PINI, "NO")
+    field(PREC, 3)
+    field(SCAN, "I/O Intr")
+}
