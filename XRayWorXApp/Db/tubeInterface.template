@@ -1,11 +1,3 @@
-record(bo,		"$(P):Initialize") {
-    field(DTYP, "asynInt32")
-    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_INITIALIZE")
-    field(PINI, "NO")
-    field(ZNAM, "Idle")
-    field(ONAM, "Start")
-}
-
 record(bi,    "$(P):Initialize_RBV") {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))TUBE_INITIALIZE_RBV")
@@ -55,6 +47,15 @@ record(bi,    "$(P):XrayOnOff_RBV") {
     field(SCAN, "I/O Intr")
 }
 
+record(ao,		"$(P):HighVoltageDemand")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_HIGH_VOLTAGE_DEMAND")
+    field(PINI, "NO")
+    field(VAL,  "20")
+    field(PREC, "2")
+}
+
 record(ai,		"$(P):HighVoltageMonitor")
 {
     field(DTYP, "asynFloat64")
@@ -62,6 +63,15 @@ record(ai,		"$(P):HighVoltageMonitor")
     field(PINI, "NO")
     field(PREC, 3)
     field(SCAN, "I/O Intr")
+}
+
+record(ao,		"$(P):TargetCurrentDemand")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_TARGET_CURRENT_DEMAND")
+    field(PINI, "NO")
+    field(VAL,  "0")
+    field(PREC, "2")
 }
 
 record(ai,		"$(P):TargetCurrentMonitor")
@@ -73,10 +83,37 @@ record(ai,		"$(P):TargetCurrentMonitor")
     field(SCAN, "I/O Intr")
 }
 
+record(ao,		"$(P):EmissionCurrentDemand")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_EMISSION_CURRENT_DEMAND")
+    field(PINI, "NO")
+    field(VAL,  "0")
+    field(PREC, "2")
+}
+
 record(ai,		"$(P):EmissionCurrentMonitor")
 {
     field(DTYP, "asynFloat64")
     field(INP,  "@asyn($(PORT),$(ADDR))TUBE_EMISSION_CURRENT_MONITOR")
+    field(PINI, "NO")
+    field(PREC, 3)
+    field(SCAN, "I/O Intr")
+}
+
+record(ao,		"$(P):TargetPowerDemand")
+{
+    field(DTYP, "asynFloat64")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_TARGET_POWER_DEMAND")
+    field(PINI, "NO")
+    field(VAL,  "0")
+    field(PREC, "2")
+}
+
+record(ai,		"$(P):TargetPowerMonitor")
+{
+    field(DTYP, "asynFloat64")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_TARGET_POWER_MONITOR")
     field(PINI, "NO")
     field(PREC, 3)
     field(SCAN, "I/O Intr")

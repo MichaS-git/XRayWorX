@@ -46,13 +46,6 @@ public:
 	//TubeInterfaceEventHandler(void);
 	//~TubeInterfaceEventHandler(void);
 
-	/*/
-	void LinkDialog(CConnectionSampleCOMDlg* dialog)
-	{
-		dlg = dialog;
-	}
-	/*/
-
 	void InitializeTask();
 
 	float GetHighVoltageMonitor()
@@ -71,8 +64,6 @@ public:
 	void SwitchXRayOn()
 	{
 		pTubeInterface->XRayOn->PcDemandValue = true;
-		CloseWindow = true;
-		//MessageBoxW(NULL, L"XRay On!", L"Info", MB_OK);
 	}
 	// ![SwitchXrayOn]
 
@@ -80,15 +71,12 @@ public:
 	void SwitchXRayOff()
 	{
 		pTubeInterface->XRayOff->PcDemandValue = true;
-		CloseWindow = true;
-		//MessageBoxW(NULL, L"XRay Off!", L"Info", MB_OK);
 	}
 	// ![SwitchXrayOff]
 
     void StartUp()
     {
         pTubeInterface->StartUp->PcDemandValue = true;
-        //MessageBoxW(NULL, L"Wait, while executing StartUp. Press ok to abort.", L"Info", MB_OK);
     }
 
 	void SetHighVoltage(float value)
@@ -101,6 +89,16 @@ public:
 		if (pTubeInterface->XrayOutControl->MonitorValue != XrayOutControls_TargetCurrentControl)
 			pTubeInterface->XrayOutControl->PcDemandValue = XrayOutControls_TargetCurrentControl;
 		pTubeInterface->TargetCurrent->PcDemandValue = value;
+	}
+
+	void SetEmissionCurrent(float value)
+	{
+		pTubeInterface->EmissionCurrent->PcDemandValue = value;
+	}
+
+	void SetTargetPower(float value)
+	{
+		pTubeInterface->TargetPower->PcDemandValue = value;
 	}
 
 	//Event handler
@@ -141,20 +139,23 @@ public:
 
 protected:
 
-    int TubeInitialize_;
     int TubeInitializeRBV_;
     int TubeStartUpState_;
     int TubeStartUp_;
     int TubeXrayOnOff_;
     int TubeXrayOnOffRBV_;
+    int TubeHighVoltageDemand_;
     int TubeHighVoltageMonitor_;
+    int TubeTargetCurrentDemand_;
     int TubeTargetCurrentMonitor_;
+    int TubeEmissionCurrentDemand_;
     int TubeEmissionCurrentMonitor_;
+    int TubeTargetPowerDemand_;
+    int TubeTargetPowerMonitor_;
 
 private:
 
 	//Member
-	//TubeInterfaceCOMDriver* dlg;
 	//Declare local pointer to ITubeInterface
 	// ![Declare ITubeInterfacePtr]
 	ITubeInterfacePtr pTubeInterface;
@@ -164,6 +165,7 @@ private:
 	TubeInterfaceEventSink tubeInterfaceEventSink;
 	TubeCmdSingleEventSink targetCurrentEventSink;
 	TubeCmdSingleEventSink emissionCurrentEventSink;
+	TubeCmdSingleEventSink targetPowerEventSink;
 	TubeCmdSingleEventSink highVoltageEventSink;
 	TubeCmdBoolEventSink xRayOffEventSink;
 	TubeCmdBoolEventSink xRayOnEventSink;
@@ -194,6 +196,7 @@ private:
     float highVoltageMonitor;
     float targetCurrentMonitor;
     float emissionCurrentMonitor;
+    float targetPowerMonitor;
 
 	HRESULT LinkEventSink(IUnknown* eventSink, const IID &riid);
 	HRESULT InitTubeInterfaceEventSink();
@@ -216,6 +219,9 @@ private:
 	//EmissionCurrent event handler
 	void OnEmissionCurrentAccessibleChanged();
 	void OnEmissionCurrentMonitorValueChanged();
+	//TargetPower event handler
+	void OnTargetPowerAccessibleChanged();
+	void OnTargetPowerMonitorValueChanged();
 	//XRayOn/Off event handler
 	void OnXRayOnOffMonitorValueChanged();
 	//Interlock event handler
@@ -244,12 +250,10 @@ private:
 	void UpdateHighVoltageMonitor();
 	void UpdateTargetCurrentMonitor();
 	void UpdateEmissionCurrentMonitor();
+	void UpdateTargetPowerMonitor();
 	void SetDlgInterlock(VARIANT_BOOL interlockClosed);
 	void SetDlgVacuumOk(VARIANT_BOOL vacuumOk);
 	LPCTSTR GetCoolingOk(ITubeMonitorBool *coolingOk);
 	void SetFlashovers(IFlashoverCOM *flashover);
 	void FillModeList();
-
-	void Initialize();
-	bool CloseWindow = false;
 };

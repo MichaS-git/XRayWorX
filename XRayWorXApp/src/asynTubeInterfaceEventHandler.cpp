@@ -1,17 +1,20 @@
 #include <asynTubeInterfaceEventHandler.h>
-//#include "CommonHeader.h"
 
 static const char *driverName = "TubeInterfaceEventHandler";
 
-#define TubeInitialize              "TUBE_INITIALIZE"
 #define TubeInitialize_RBV          "TUBE_INITIALIZE_RBV"
 #define TubeStartUpState	        "TUBE_START_UP_STATE"
 #define TubeStartUp				    "TUBE_START_UP"
 #define TubeXrayOnOff			    "TUBE_XRAY_ONOFF"
 #define TubeXrayOnOff_RBV		    "TUBE_XRAY_ONOFF_RBV"
+#define TubeHighVoltageDemand       "TUBE_HIGH_VOLTAGE_DEMAND"
 #define TubeHighVoltageMonitor      "TUBE_HIGH_VOLTAGE_MONITOR"
+#define TubeTargetCurrentDemand     "TUBE_TARGET_CURRENT_DEMAND"
 #define TubeTargetCurrentMonitor    "TUBE_TARGET_CURRENT_MONITOR"
+#define TubeEmissionCurrentDemand   "TUBE_EMISSION_CURRENT_DEMAND"
 #define TubeEmissionCurrentMonitor  "TUBE_EMISSION_CURRENT_MONITOR"
+#define TubeTargetPowerDemand       "TUBE_TARGET_POWER_DEMAND"
+#define TubeTargetPowerMonitor      "TUBE_TARGET_POWER_MONITOR"
 
 static void c_InitializeTask(void *arg)
 {
@@ -28,7 +31,7 @@ void TubeInterfaceEventHandler::InitializeTask(void)
 
     // Initialize our COM instance
     // in the X-COM example from XRayWorX it is "::CoInitialize(NULL);"
-    // we need to use the following in order to NOT block multithreading:
+    // let's try the multithread-option instead
     //::CoInitialize(NULL);
     ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
 
@@ -43,7 +46,9 @@ void TubeInterfaceEventHandler::InitializeTask(void)
 		try
 		{
             //For customizing paths used by XRAYWorXBaseCOM.dll uncomment the next line and change the paths accordingly.
-			loader->SetCustomPaths(_bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"));
+			loader->SetCustomPaths(_bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"),
+                          _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"),
+                          _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"));
 			_bstr_t ip = loader->DefaultIpAddress->Ip;
 			//std::cout << "IP:" << ip << std::endl;
 			pTubeInterface = loader->GetTubeInterface(ip);
@@ -52,8 +57,31 @@ void TubeInterfaceEventHandler::InitializeTask(void)
 
 			pDataModuleProvider = ((IDataModuleLoaderCOMPtr)loader)->GetDataModuleProvider(ip);
 
-            MessageBoxW(NULL, L"Instantiating TubeInterface. Press ok to abort.", L"Info", MB_OK);
-			//OnInitialized(); // this causes a crash ...
+            //MessageBoxW(NULL, L"Instantiating TubeInterface. Press ok to abort.", L"Info", MB_OK);
+            // a so called MessagePump window is needed; it keeps the connection to the tube-interface open
+            // we move it to a invisible monitor-location, e.g. x=y=-1000
+            HWND hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, L"STATIC", L"MessagePump window.", WS_VISIBLE | WS_OVERLAPPEDWINDOW,
+                                        -1000, -1000, 400, 200, NULL, NULL, NULL, NULL);
+            if (hwnd == NULL)
+            {
+                printf("Error while creating the MessagePump window: %d\n", GetLastError());
+            }
+            else
+            {
+                // show window
+                ShowWindow(hwnd, SW_SHOW);
+
+                // message-pump loop
+                MSG msg;
+                while (GetMessage(&msg, NULL, 0, 0))
+                {
+                    TranslateMessage(&msg);
+                    DispatchMessage(&msg);
+                }
+
+                // destroy window
+                DestroyWindow(hwnd);
+            }
 		}
 		catch (_com_error& ex)
 		{
@@ -63,33 +91,6 @@ void TubeInterfaceEventHandler::InitializeTask(void)
 	else
 		printf("Error creating instance of TubeLoaderCOM.\n");
 	// ![Init ITubeInterfacePtr]
-
-
-    //MessageBoxW(NULL, L"Instantiating TubeInterface. Press ok to abort.", L"Info", MB_OK);
-
-    // we need the MessageBox, otherwise the TubeInterface is not loaded (?!?)
-
-    /*HWND hwnd = CreateWindowExW(WS_EX_CLIENTEDGE, L"STATIC", L"Instantiating TubeInterface. Press ok to abort.", WS_VISIBLE | WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 400, 200, NULL, NULL, NULL, NULL);
-    if (hwnd == NULL)
-    {
-        printf("Fehler beim Erstellen des Fensters: %d\n", GetLastError());
-    }
-    else
-    {
-        // Fenster anzeigen
-        ShowWindow(hwnd, SW_SHOW);
-
-        // Optional: Main Loop für das Fenster
-        MSG msg;
-        while (GetMessage(&msg, NULL, 0, 0))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-
-        // Fenster zerstören
-        DestroyWindow(hwnd);
-    }*/
 }
 
 HRESULT TubeInterfaceEventHandler::InitTubeInterfaceEventSink()
@@ -145,6 +146,7 @@ void TubeInterfaceEventHandler::OnInitialized()
 
 	LinkEventSink(&targetCurrentEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->TargetCurrent);
 	LinkEventSink(&emissionCurrentEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->EmissionCurrent);
+	LinkEventSink(&targetPowerEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->TargetPower);
 	LinkEventSink(&highVoltageEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->HighVoltage);
 	LinkEventSink(&xRayOnEventSink, __uuidof(ITubeCommandBoolEvents), pTubeInterface->XRayOn);
 	LinkEventSink(&xRayOffEventSink, __uuidof(ITubeCommandBoolEvents), pTubeInterface->XRayOff);
@@ -175,70 +177,16 @@ void TubeInterfaceEventHandler::OnInitialized()
 	SetDlgInterlock(pTubeInterface->Interlock->MonitorValue);
 	SetDlgVacuumOk(pTubeInterface->VacuumOk->MonitorValue);
 
-	//printf("pTubeInterface initialized: %s\n", pTubeInterface->IsInitialized ? "true" : "false");
-
 	if (pTubeInterface->IsInitialized) {
         setIntegerParam(TubeInitializeRBV_, 1);
 	}
 	if (!pTubeInterface->XRayOn->MonitorValue && pTubeInterface->XRayOff->MonitorValue) {
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS OFF"));
-		printf("XrayState: X-RAY IS OFF\n");
 		setIntegerParam(TubeXrayOnOffRBV_, 0);
 	} else {
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS ON"));
-		printf("XrayState: X-RAY IS ON\n");
 		setIntegerParam(TubeXrayOnOffRBV_, 1);
 	}
 
     callParamCallbacks();
-
-    // Close the message box programmatically
-    //::EndDialog(::GetActiveWindow(), IDOK);
-}
-
-void TubeInterfaceEventHandler::Initialize()
-{
-    highVoltageMonitor = 0;
-	targetCurrentMonitor = 0;
-	emissionCurrentMonitor = 0;
-	// ![Init ITubeInterfacePtr]
-
-    // Initialize our COM instance
-    // in the X-COM example from XRayWorX it is "::CoInitialize(NULL);"
-    // we need to use the following in order to NOT block multithreading:
-    //::CoInitialize(NULL);
-    ::CoInitializeEx(NULL, COINIT_MULTITHREADED);
-
-	pTubeInterface = NULL;
-	dwEventCookie = 0;
-	pIConnectionPoint = NULL;
-	//Create instance from COM interface
-	XRAYWorXBaseCOM::ITubeLoaderCOMPtr loader = NULL;
-	HRESULT hr = loader.CreateInstance(__uuidof(TubeLoaderCOM));
-	if (hr == S_OK)
-	{
-		try
-		{
-            //For customizing paths used by XRAYWorXBaseCOM.dll uncomment the next line and change the paths accordingly.
-			loader->SetCustomPaths(_bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"));
-			_bstr_t ip = loader->DefaultIpAddress->Ip;
-			//std::cout << "IP:" << ip << std::endl;
-			pTubeInterface = loader->GetTubeInterface(ip);
-
-			hr = InitTubeInterfaceEventSink();
-
-			pDataModuleProvider = ((IDataModuleLoaderCOMPtr)loader)->GetDataModuleProvider(ip);
-
-			//OnInitialized(); // this causes a crash ...
-		}
-		catch (_com_error& ex)
-		{
-			printf("Error: %s\n", ex.ErrorMessage());
-		}
-	}
-	else
-		printf("Error creating instance of TubeLoaderCOM.\n");
-	// ![Init ITubeInterfacePtr]
 }
 
 void TubeInterfaceEventHandler::OnTubeStateChanged()
@@ -264,6 +212,8 @@ void TubeInterfaceEventHandler::OnIsAccessibleChanged(ULONG eventSinkID)
 		OnTargetCurrentAccessibleChanged();
 	else if (eventSinkID == emissionCurrentEventSink.GetEventSinkID())
 		OnEmissionCurrentAccessibleChanged();
+	else if (eventSinkID == targetPowerEventSink.GetEventSinkID())
+		OnTargetPowerAccessibleChanged();
 	else if (eventSinkID == cooling1OkEventSink.GetEventSinkID())
 		OnCooling1OkMonitorChanged();
 	else if (eventSinkID == cooling2OkEventSink.GetEventSinkID())
@@ -346,6 +296,16 @@ void TubeInterfaceEventHandler::OnEmissionCurrentAccessibleChanged()
 	}
 }
 
+void TubeInterfaceEventHandler::OnTargetPowerAccessibleChanged()
+{
+	ITubeCommandSinglePtr targetPower = pTubeInterface->TargetPower;
+	if (targetPower)
+	{
+		if (targetPower->HasReadAccess())
+			UpdateTargetPowerMonitor();
+	}
+}
+
 void TubeInterfaceEventHandler::OnMonitorValueChanged(ULONG eventSinkID)
 {
     printf("Function OnMonitorValueChanged executed.\n");
@@ -355,6 +315,8 @@ void TubeInterfaceEventHandler::OnMonitorValueChanged(ULONG eventSinkID)
 		OnTargetCurrentMonitorValueChanged();
 	else if (eventSinkID == emissionCurrentEventSink.GetEventSinkID())
 		OnEmissionCurrentMonitorValueChanged();
+	else if (eventSinkID == targetPowerEventSink.GetEventSinkID())
+		OnTargetPowerMonitorValueChanged();
 	else if (eventSinkID == xRayOffEventSink.GetEventSinkID() ||
 		eventSinkID == xRayOnEventSink.GetEventSinkID())
 		OnXRayOnOffMonitorValueChanged();
@@ -426,6 +388,27 @@ void TubeInterfaceEventHandler::UpdateEmissionCurrentMonitor()
 	}
 }
 
+void TubeInterfaceEventHandler::OnTargetPowerMonitorValueChanged()
+{
+	UpdateTargetPowerMonitor();
+}
+
+void TubeInterfaceEventHandler::UpdateTargetPowerMonitor()
+{
+	ITubeCommandSinglePtr targetPower = pTubeInterface->TargetPower;
+	if (targetPower)
+	{
+		if (targetPower->HasReadAccess())
+		{
+			float targetPowerDemand = targetPower->PcDemandValue;
+			targetPowerMonitor = targetPower->MonitorValue;
+			setDoubleParam(TubeTargetPowerMonitor_, targetPowerMonitor);
+			callParamCallbacks();
+			//long targetErrorCode = targetCurrent->ErrorCode;
+		}
+	}
+}
+
 void TubeInterfaceEventHandler::OnDemandLowerLimitChanged(ULONG eventSinkID)
 {
 	if (eventSinkID == highVoltageEventSink.GetEventSinkID())
@@ -482,8 +465,6 @@ void TubeInterfaceEventHandler::OnStartUpStateChanged()
 	if (pTubeInterface->StartUp->State == CommandStates_OK) {
 		printf("State: OK\n");
 		setIntegerParam(TubeStartUpState_, 0);
-        // Close the message box programmatically
-        //::EndDialog(::GetActiveWindow(), IDOK);
 	} else if (pTubeInterface->StartUp->State == CommandStates_Acknowledged) {
 		printf("State: Acknowledged\n");
 		setIntegerParam(TubeStartUpState_, 1);
@@ -496,8 +477,6 @@ void TubeInterfaceEventHandler::OnStartUpStateChanged()
     } else if (pTubeInterface->StartUp->State == CommandStates_Error) {
 		printf("State: Error\n");
 		setIntegerParam(TubeStartUpState_, 4);
-        // Close the message box programmatically
-        //::EndDialog(::GetActiveWindow(), IDOK);
     }
     callParamCallbacks();
 }
@@ -521,20 +500,11 @@ void TubeInterfaceEventHandler::OnTargetCurrentPlcDemandValueChanged()
 void TubeInterfaceEventHandler::OnXRayOnOffMonitorValueChanged()
 {
 	if (!pTubeInterface->XRayOn->MonitorValue && pTubeInterface->XRayOff->MonitorValue) {
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS OFF"));
-		printf("XrayState: X-RAY IS OFF\n");
 		setIntegerParam(TubeXrayOnOffRBV_, 0);
 	} else {
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS ON"));
-		printf("XrayState: X-RAY IS ON\n");
 		setIntegerParam(TubeXrayOnOffRBV_, 1);
 	}
     callParamCallbacks();
-
-    /*if (CloseWindow)
-        // Close the message box programmatically
-        ::EndDialog(::GetActiveWindow(), IDOK);
-        CloseWindow = false;*/
 }
 
 void TubeInterfaceEventHandler::OnInterlockMonitorValueChanged()
@@ -1056,12 +1026,6 @@ asynStatus TubeInterfaceEventHandler::writeInt32(asynUser *pasynUser, epicsInt32
     this->getAddress(pasynUser, &addr);
     setIntegerParam(addr, function, value);
 
-    if (function == TubeInitialize_) {
-        if (value) {
-            Initialize();
-        }
-    }
-
     if (function == TubeStartUp_) {
         if (value) {
             StartUp();
@@ -1146,19 +1110,22 @@ asynStatus TubeInterfaceEventHandler::writeFloat64(asynUser *pasynUser, epicsFlo
     // Set the parameter in the parameter library.
     status = setDoubleParam(addr, function, value);
 
-    /*if (function == AbsolutePosition_)
+    if (function == TubeHighVoltageDemand_)
     {
-        //std::cout << "Param " << value << std::endl;
-        MT_GotoAbsolutePosition(value);
+        SetHighVoltage(static_cast<float>(value));
     }
-    if (function == Load_)
+    if (function == TubeTargetCurrentDemand_)
     {
-        MT_GotoLoad(value);
+        SetTargetCurrent(static_cast<float>(value));
     }
-    if (function == Extension_)
+    if (function == TubeEmissionCurrentDemand_)
     {
-        MT_GotoExtension(value);
-    }*/
+        SetEmissionCurrent(static_cast<float>(value));
+    }
+    if (function == TubeTargetPowerDemand_)
+    {
+        SetTargetPower(static_cast<float>(value));
+    }
 
     // Do callbacks so higher layers see any changes
     status = callParamCallbacks();
@@ -1180,21 +1147,22 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName)
     : asynPortDriver(portName, 1, 1,
                      asynInt32Mask | asynFloat64Mask | asynDrvUserMask,  // Interfaces that we implement
                      asynInt32Mask | asynFloat64Mask,    // Interfaces that do callbacks
-                     //ASYN_CANBLOCK, 1, /* ASYN_CANBLOCK=1, autoConnect=1 */
                      ASYN_MULTIDEVICE | ASYN_CANBLOCK, 1, /* ASYN_CANBLOCK=1, ASYN_MULTIDEVICE=1, autoConnect=1 */
-                     // this is how to start without ASYN_CANBLOCK
-                     //ASYN_MULTIDEVICE, 1, /* ASYN_CANBLOCK=1, ASYN_MULTIDEVICE=1, autoConnect=1 */
                      0, 0) /* Default priority and stack size */
 {
-    createParam(TubeInitialize,			    asynParamInt32,		&TubeInitialize_);
     createParam(TubeInitialize_RBV,			asynParamInt32,		&TubeInitializeRBV_);
     createParam(TubeStartUpState,			asynParamInt32,		&TubeStartUpState_);
     createParam(TubeStartUp,			    asynParamInt32,		&TubeStartUp_);
     createParam(TubeXrayOnOff,			    asynParamInt32,		&TubeXrayOnOff_);
     createParam(TubeXrayOnOff_RBV,			asynParamInt32,		&TubeXrayOnOffRBV_);
+    createParam(TubeHighVoltageDemand,		asynParamFloat64,	&TubeHighVoltageDemand_);
     createParam(TubeHighVoltageMonitor,		asynParamFloat64,	&TubeHighVoltageMonitor_);
+    createParam(TubeTargetCurrentDemand,	asynParamFloat64,	&TubeTargetCurrentDemand_);
     createParam(TubeTargetCurrentMonitor,	asynParamFloat64,	&TubeTargetCurrentMonitor_);
+    createParam(TubeEmissionCurrentDemand,	asynParamFloat64,	&TubeEmissionCurrentDemand_);
     createParam(TubeEmissionCurrentMonitor,	asynParamFloat64,	&TubeEmissionCurrentMonitor_);
+    createParam(TubeTargetPowerDemand,	    asynParamFloat64,	&TubeTargetPowerDemand_);
+    createParam(TubeTargetPowerMonitor,	    asynParamFloat64,	&TubeTargetPowerMonitor_);
 
     setIntegerParam(TubeInitializeRBV_, 0);
     callParamCallbacks();
