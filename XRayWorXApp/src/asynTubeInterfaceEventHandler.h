@@ -35,7 +35,7 @@ using namespace XRAYWorXBase;
 class TubeInterfaceEventHandler : public asynPortDriver
 {
 public:
-    TubeInterfaceEventHandler(const char *portName);
+    TubeInterfaceEventHandler(const char *portName, char *configFilesPath);
 
     /* These are the methods that we override from asynPortDriver */
     virtual asynStatus writeInt32(asynUser *pasynUser, epicsInt32 value);
@@ -139,11 +139,16 @@ public:
 
 protected:
 
+    char filesPath[256];
+
     int TubeInitializeRBV_;
     int TubeStartUpState_;
     int TubeStartUp_;
     int TubeXrayOnOff_;
     int TubeXrayOnOffRBV_;
+    int TubeInterlockRBV_;
+    int TubeVacuumRBV_;
+    int TubeCoolingRBV_;
     int TubeHighVoltageDemand_;
     int TubeHighVoltageMonitor_;
     int TubeTargetCurrentDemand_;
@@ -169,6 +174,7 @@ private:
 	TubeCmdSingleEventSink highVoltageEventSink;
 	TubeCmdBoolEventSink xRayOffEventSink;
 	TubeCmdBoolEventSink xRayOnEventSink;
+	TubeMonBoolEventSink xRayReadyEventSink;
 	TubeMonBoolEventSink interlockEventSink;
 	TubeMonBoolEventSink vacuumOkEventSink;
 	TubeMonBoolEventSink cooling1OkEventSink;
@@ -253,7 +259,7 @@ private:
 	void UpdateTargetPowerMonitor();
 	void SetDlgInterlock(VARIANT_BOOL interlockClosed);
 	void SetDlgVacuumOk(VARIANT_BOOL vacuumOk);
-	LPCTSTR GetCoolingOk(ITubeMonitorBool *coolingOk);
+	void GetCoolingOk();
 	void SetFlashovers(IFlashoverCOM *flashover);
 	void FillModeList();
 };

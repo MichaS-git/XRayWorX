@@ -1,12 +1,12 @@
 
 file {
-	name="C:\epics\inst-7.0.6\XRayWorX\XRayWorXApp\op\adl\X_COM_BAK.adl"
+	name="C:\epics\inst-7.0.6\XRayWorX\XRayWorXApp\op\adl\X_COM.adl"
 	version=030109
 }
 display {
 	object {
-		x=2280
-		y=617
+		x=3020
+		y=156
 		width=309
 		height=680
 	}
@@ -627,5 +627,137 @@ text {
 	}
 	align="horiz. right"
 	limits {
+	}
+}
+oval {
+	object {
+		x=10
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=60
+	}
+	"dynamic attribute" {
+		vis="if zero"
+		calc="A"
+		chan="$(P):Interlock_RBV"
+	}
+}
+oval {
+	object {
+		x=10
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="if not zero"
+		calc="A"
+		chan="$(P):Interlock_RBV"
+	}
+}
+text {
+	object {
+		x=32
+		y=541
+		width=60
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Interlock"
+}
+oval {
+	object {
+		x=105
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=60
+	}
+	"dynamic attribute" {
+		vis="if zero"
+		calc="A"
+		chan="$(P):Vacuum_RBV"
+	}
+}
+text {
+	object {
+		x=127
+		y=541
+		width=60
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Vacuum"
+}
+oval {
+	object {
+		x=105
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="if not zero"
+		calc="A"
+		chan="$(P):Vacuum_RBV"
+	}
+}
+oval {
+	object {
+		x=200
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=60
+	}
+	"dynamic attribute" {
+		vis="if zero"
+		calc="A"
+		chan="$(P):Cooling_RBV"
+	}
+}
+text {
+	object {
+		x=222
+		y=540
+		width=60
+		height=15
+	}
+	"basic attribute" {
+		clr=14
+	}
+	textix="Cooling"
+}
+oval {
+	object {
+		x=200
+		y=540
+		width=15
+		height=15
+	}
+	"basic attribute" {
+		clr=20
+	}
+	"dynamic attribute" {
+		vis="if not zero"
+		calc="A"
+		chan="$(P):Cooling_RBV"
 	}
 }

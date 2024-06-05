@@ -47,6 +47,30 @@ record(bi,    "$(P):XrayOnOff_RBV") {
     field(SCAN, "I/O Intr")
 }
 
+record(bi,    "$(P):Interlock_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_INTERLOCK_RBV")
+    field(ZNAM, "Closed")
+    field(ONAM, "Open")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi,    "$(P):Vacuum_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_VACUUM_RBV")
+    field(ZNAM, "Ok")
+    field(ONAM, "Insufficient")
+    field(SCAN, "I/O Intr")
+}
+
+record(bi,    "$(P):Cooling_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_COOLING_RBV")
+    field(ZNAM, "Good")
+    field(ONAM, "Bad")
+    field(SCAN, "I/O Intr")
+}
+
 record(ao,		"$(P):HighVoltageDemand")
 {
     field(DTYP, "asynFloat64")

@@ -7,6 +7,9 @@ static const char *driverName = "TubeInterfaceEventHandler";
 #define TubeStartUp				    "TUBE_START_UP"
 #define TubeXrayOnOff			    "TUBE_XRAY_ONOFF"
 #define TubeXrayOnOff_RBV		    "TUBE_XRAY_ONOFF_RBV"
+#define TubeInterlock_RBV		    "TUBE_INTERLOCK_RBV"
+#define TubeVacuum_RBV		        "TUBE_VACUUM_RBV"
+#define TubeCooling_RBV		        "TUBE_COOLING_RBV"
 #define TubeHighVoltageDemand       "TUBE_HIGH_VOLTAGE_DEMAND"
 #define TubeHighVoltageMonitor      "TUBE_HIGH_VOLTAGE_MONITOR"
 #define TubeTargetCurrentDemand     "TUBE_TARGET_CURRENT_DEMAND"
@@ -45,10 +48,8 @@ void TubeInterfaceEventHandler::InitializeTask(void)
 	{
 		try
 		{
-            //For customizing paths used by XRAYWorXBaseCOM.dll uncomment the next line and change the paths accordingly.
-			loader->SetCustomPaths(_bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"),
-                          _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"),
-                          _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"));
+            //For customizing paths used by XRAYWorXBaseCOM.dll :
+			loader->SetCustomPaths(_bstr_t(filesPath), _bstr_t(filesPath), _bstr_t(filesPath));
 			_bstr_t ip = loader->DefaultIpAddress->Ip;
 			//std::cout << "IP:" << ip << std::endl;
 			pTubeInterface = loader->GetTubeInterface(ip);
@@ -150,6 +151,7 @@ void TubeInterfaceEventHandler::OnInitialized()
 	LinkEventSink(&highVoltageEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->HighVoltage);
 	LinkEventSink(&xRayOnEventSink, __uuidof(ITubeCommandBoolEvents), pTubeInterface->XRayOn);
 	LinkEventSink(&xRayOffEventSink, __uuidof(ITubeCommandBoolEvents), pTubeInterface->XRayOff);
+	LinkEventSink(&xRayReadyEventSink, __uuidof(ITubeMonitorBoolEvents), pTubeInterface->XrayReady);
 	LinkEventSink(&interlockEventSink, __uuidof(ITubeMonitorBoolEvents), pTubeInterface->Interlock);
 	LinkEventSink(&vacuumOkEventSink, __uuidof(ITubeMonitorBoolEvents), pTubeInterface->VacuumOk);
 	LinkEventSink(&cooling1OkEventSink, __uuidof(ITubeMonitorBoolEvents), pTubeInterface->CoolingOk);
@@ -176,6 +178,7 @@ void TubeInterfaceEventHandler::OnInitialized()
 
 	SetDlgInterlock(pTubeInterface->Interlock->MonitorValue);
 	SetDlgVacuumOk(pTubeInterface->VacuumOk->MonitorValue);
+	GetCoolingOk();
 
 	if (pTubeInterface->IsInitialized) {
         setIntegerParam(TubeInitializeRBV_, 1);
@@ -198,14 +201,12 @@ void TubeInterfaceEventHandler::OnTubeStateChanged()
 void TubeInterfaceEventHandler::OnTubeInterfaceError(ULONG errorCode)
 {
 	//add userdefined code here
-	//dlg->SetError(errorCode);
 	printf("Error: %lu\n", errorCode);
 }
 
 void TubeInterfaceEventHandler::OnIsAccessibleChanged(ULONG eventSinkID)
 {
 	//add user defined code here
-	printf("Function OnIsAccessibleChanged executed.\n");
 	if (eventSinkID == highVoltageEventSink.GetEventSinkID())
 		OnHighVoltageAccessibleChanged();
 	else if (eventSinkID == targetCurrentEventSink.GetEventSinkID())
@@ -267,8 +268,6 @@ void TubeInterfaceEventHandler::UpdateHighVoltageMonitor()
 		{
 			float highVoltageDemand = highVoltage->PcDemandValue;
 			highVoltageMonitor = highVoltage->MonitorValue;
-			//dlg->SetHighVoltageMonitor(highVoltageMonitor);
-			//printf("SetHighVoltageMonitor: %f\n", highVoltageMonitor);
 			setDoubleParam(TubeHighVoltageMonitor_, highVoltageMonitor);
 			callParamCallbacks();
 			long highVoltageErrorCode = highVoltage->ErrorCode;
@@ -308,7 +307,6 @@ void TubeInterfaceEventHandler::OnTargetPowerAccessibleChanged()
 
 void TubeInterfaceEventHandler::OnMonitorValueChanged(ULONG eventSinkID)
 {
-    printf("Function OnMonitorValueChanged executed.\n");
 	if (eventSinkID == highVoltageEventSink.GetEventSinkID())
 		OnHighVoltageMonitorValueChanged();
 	else if (eventSinkID == targetCurrentEventSink.GetEventSinkID())
@@ -358,8 +356,6 @@ void TubeInterfaceEventHandler::UpdateTargetCurrentMonitor()
 		{
 			float targetCurrentDemand = targetCurrent->PcDemandValue;
 			targetCurrentMonitor = targetCurrent->MonitorValue;
-			//dlg->SetTargetCurrentMonitor(targetCurrentMonitor);
-			//printf("SetTargetCurrentMonitor: %f\n", targetCurrentMonitor);
 			setDoubleParam(TubeTargetCurrentMonitor_, targetCurrentMonitor);
 			callParamCallbacks();
 			long targetErrorCode = targetCurrent->ErrorCode;
@@ -461,21 +457,15 @@ void TubeInterfaceEventHandler::OnTargetCurrentStateChanged()
 
 void TubeInterfaceEventHandler::OnStartUpStateChanged()
 {	//user defined code
-	printf("StartUp sequence entered\n");
 	if (pTubeInterface->StartUp->State == CommandStates_OK) {
-		printf("State: OK\n");
 		setIntegerParam(TubeStartUpState_, 0);
 	} else if (pTubeInterface->StartUp->State == CommandStates_Acknowledged) {
-		printf("State: Acknowledged\n");
 		setIntegerParam(TubeStartUpState_, 1);
 	} else if (pTubeInterface->StartUp->State == CommandStates_Busy) {
-		printf("State: Busy\n");
 		setIntegerParam(TubeStartUpState_, 2);
 	} else if (pTubeInterface->StartUp->State == CommandStates_Warning) {
-		printf("State: Warning\n");
 		setIntegerParam(TubeStartUpState_, 3);
     } else if (pTubeInterface->StartUp->State == CommandStates_Error) {
-		printf("State: Error\n");
 		setIntegerParam(TubeStartUpState_, 4);
     }
     callParamCallbacks();
@@ -514,12 +504,12 @@ void TubeInterfaceEventHandler::OnInterlockMonitorValueChanged()
 
 void TubeInterfaceEventHandler::SetDlgInterlock(VARIANT_BOOL interlockClosed)
 {
-    if (interlockClosed)
-        //dlg->m_edInterlock.SetWindowTextA("CLOSED");
-		printf("Interlock: CLOSED\n");
-    else
-        //dlg->m_edInterlock.SetWindowTextA("OPEN");
-		printf("Interlock: OPEN\n");
+    if (interlockClosed) {
+        setIntegerParam(TubeInterlockRBV_, 0);
+    } else {
+        setIntegerParam(TubeInterlockRBV_, 1);
+    }
+    callParamCallbacks();
 }
 
 
@@ -530,60 +520,45 @@ void TubeInterfaceEventHandler::OnVacuumOkMonitorValueChanged()
 
 void TubeInterfaceEventHandler::SetDlgVacuumOk(VARIANT_BOOL vacuumOk)
 {
-	if (vacuumOk)
-		//dlg->m_edVacuum.SetWindowTextA("OK");
+	if (vacuumOk) {
+        setIntegerParam(TubeVacuumRBV_, 0);
 		printf("Vacuum: OK\n");
-	else
-		//dlg->m_edVacuum.SetWindowTextA("INSUFFICIENT");
-		printf("Vacuum: INSUFFICIENT\n");
+	} else {
+        setIntegerParam(TubeVacuumRBV_, 1);
+        printf("Vacuum: INSUFFICIENT\n");
+	}
+	callParamCallbacks();
 }
 
 void TubeInterfaceEventHandler::OnCooling1OkMonitorChanged()
 {
     // User-defined code
-    LPCTSTR coolingOk = GetCoolingOk(pTubeInterface->CoolingOk);
-
-    // Check if coolingOk is null
-    if (coolingOk)
-    {
-        //dlg->m_edCooling1.SetWindowTextA(coolingOk);
-		printf("Cooling1: OK\n");
-    }
-    else
-    {
-        // Handle the case when coolingOk is null
-        //dlg->m_edCooling1.SetWindowTextA("Unknown");
-		printf("Cooling1: Unknown\n");
-    }
+    GetCoolingOk();
 }
 
 
 void TubeInterfaceEventHandler::OnCooling2OkMonitorChanged()
 {	//user defined code
-	LPCTSTR coolingOk = GetCoolingOk(pTubeInterface->CoolingTwoOk);
-	printf("Cooling2: OK\n");
+	GetCoolingOk();
 }
 
-/*LPCTSTR TubeInterfaceEventHandler::GetCoolingOk(ITubeMonitorBool *coolingOk)
+void TubeInterfaceEventHandler::GetCoolingOk()
 {
-	if (coolingOk->HasReadAccess())
-	{
-		if (coolingOk->MonitorValue)
-			return (LPCTSTR)_T("GOOD");
-		return (LPCTSTR)_T("BAD");
-	}
-	return (LPCTSTR)_T("NOT ACCESSIBLE");
-}*/
+    // returns -1 if cooling ok and 0 if not ok
+    int coolingOneState = 0, coolingTwoState = 0;
 
-const char* TubeInterfaceEventHandler::GetCoolingOk(ITubeMonitorBool *coolingOk)
-{
-    if (coolingOk->HasReadAccess())
-    {
-        if (coolingOk->MonitorValue)
-            return "GOOD";
-        return "BAD";
+    if (pTubeInterface->CoolingOk->HasReadAccess()) {
+        coolingOneState = pTubeInterface->CoolingOk->MonitorValue;
     }
-    return "NOT ACCESSIBLE";
+    if (pTubeInterface->CoolingTwoOk->HasReadAccess()) {
+        coolingTwoState = pTubeInterface->CoolingTwoOk->MonitorValue;
+    }
+    if (coolingOneState == 0 || coolingTwoState == 0) {
+        setIntegerParam(TubeCoolingRBV_, 1);
+    } else {
+        setIntegerParam(TubeCoolingRBV_, 0);
+    }
+    callParamCallbacks();
 }
 
 
@@ -600,11 +575,8 @@ void TubeInterfaceEventHandler::OnFlashoverChanged()
 void TubeInterfaceEventHandler::SetFlashovers(IFlashoverCOM *flashover)
 {
 	if (flashover->HasReadAccess())
-		//dlg->SetFlashoverCount(flashover->Count);
 		printf("SetFlashoverCount: %i\n", flashover->Count);
 	else
-		//dlg->m_edFlashover.SetWindowTextW((LPCTSTR)_T("NOT ACCESSIBLE"));
-		//dlg->m_edFlashover.SetWindowTextA("NOT ACCESSIBLE");
 		printf("Flashover NOT ACCESSIBLE\n");
 }
 
@@ -759,7 +731,6 @@ void TubeInterfaceEventHandler::OnModeChanged()
 	if (pTubeInterface->Mode->HasReadAccess())
 	{
 		int index = (int)pTubeInterface->Mode->MonitorValue;
-			//dlg->cbModes.SetCurSel(index);
 			printf("cbModes.SetCurSel: %i\n", index);
 	}
 }
@@ -1143,7 +1114,7 @@ asynStatus TubeInterfaceEventHandler::writeFloat64(asynUser *pasynUser, epicsFlo
 }
 
 /* Constructor for the TubeInterfaceEventHandler class */
-TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName)
+TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName, char *configFilesPath)
     : asynPortDriver(portName, 1, 1,
                      asynInt32Mask | asynFloat64Mask | asynDrvUserMask,  // Interfaces that we implement
                      asynInt32Mask | asynFloat64Mask,    // Interfaces that do callbacks
@@ -1155,6 +1126,9 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName)
     createParam(TubeStartUp,			    asynParamInt32,		&TubeStartUp_);
     createParam(TubeXrayOnOff,			    asynParamInt32,		&TubeXrayOnOff_);
     createParam(TubeXrayOnOff_RBV,			asynParamInt32,		&TubeXrayOnOffRBV_);
+    createParam(TubeInterlock_RBV,			asynParamInt32,		&TubeInterlockRBV_);
+    createParam(TubeVacuum_RBV,			    asynParamInt32,		&TubeVacuumRBV_);
+    createParam(TubeCooling_RBV,			asynParamInt32,		&TubeCoolingRBV_);
     createParam(TubeHighVoltageDemand,		asynParamFloat64,	&TubeHighVoltageDemand_);
     createParam(TubeHighVoltageMonitor,		asynParamFloat64,	&TubeHighVoltageMonitor_);
     createParam(TubeTargetCurrentDemand,	asynParamFloat64,	&TubeTargetCurrentDemand_);
@@ -1163,6 +1137,8 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName)
     createParam(TubeEmissionCurrentMonitor,	asynParamFloat64,	&TubeEmissionCurrentMonitor_);
     createParam(TubeTargetPowerDemand,	    asynParamFloat64,	&TubeTargetPowerDemand_);
     createParam(TubeTargetPowerMonitor,	    asynParamFloat64,	&TubeTargetPowerMonitor_);
+
+    strncpy(filesPath, configFilesPath, sizeof(filesPath) - 1); // Copy the string safely
 
     setIntegerParam(TubeInitializeRBV_, 0);
     callParamCallbacks();
@@ -1177,19 +1153,21 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName)
 
 
 /** Configuration command, called directly or from iocsh */
-extern "C" int TubeInterfaceEventHandlerConfig(const char *portName)
+extern "C" int TubeInterfaceEventHandlerConfig(const char *portName, char *configFilesPath)
 {
-    TubeInterfaceEventHandler *pTubeInterfaceEventHandler = new TubeInterfaceEventHandler(portName);
+    TubeInterfaceEventHandler *pTubeInterfaceEventHandler = new TubeInterfaceEventHandler(portName, configFilesPath);
     pTubeInterfaceEventHandler = NULL;  /* This is just to avoid compiler warnings */
     return(asynSuccess);
 }
 
-static const iocshArg configArg0 = { "Port name",      iocshArgString};
-static const iocshArg * const configArgs[] = {&configArg0};
-static const iocshFuncDef configFuncDef = {"TubeInterfaceEventHandlerConfig", 1, configArgs};
+static const iocshArg configArg0 = { "Port name",           iocshArgString};
+static const iocshArg configArg1 = { "Config Files Patch",  iocshArgString};
+static const iocshArg * const configArgs[] = {&configArg0,
+                                              &configArg1};
+static const iocshFuncDef configFuncDef = {"TubeInterfaceEventHandlerConfig", 2, configArgs};
 static void configCallFunc(const iocshArgBuf *args)
 {
-    TubeInterfaceEventHandlerConfig(args[0].sval);
+    TubeInterfaceEventHandlerConfig(args[0].sval, args[1].sval);
 }
 
 void drvTubeInterfaceEventHandlerRegister(void)
