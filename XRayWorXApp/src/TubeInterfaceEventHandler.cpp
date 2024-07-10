@@ -1,4 +1,4 @@
-//#include "StdAfx.h"
+#include "StdAfx.h"
 #include <sstream>
 #include "CommonHeader.h"
 #include "TubeInterfaceEventHandler.h"
@@ -9,7 +9,7 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler()
 	targetCurrentMonitor = 0;
 	// ![Init ITubeInterfacePtr]
 	::CoInitialize(NULL);
-	
+
 	pTubeInterface = NULL;
 	dwEventCookie = 0;
 	pIConnectionPoint = NULL;
@@ -21,35 +21,23 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler()
 		try
 		{
 			//For customizing paths used by XRAYWorXBaseCOM.dll uncomment the next line and change the paths accordingly.
-			loader->SetCustomPaths(_bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"), _bstr_t("C://epics//IOC//XRayWorX//bin//windows-x64-static"));
+			//loader->SetCustomPaths(_bstr_t("C://Samples//DefaultData"), _bstr_t("C://Samples//AppData"), _bstr_t("C://Samples//UserData"));
+			//For customizing paths used by XRAYWorXBaseCOM.dll (AND keep a copy of the log-files at the default path) uncomment the next line and change the path accordingly.
+			//loader->SetCustomPathsWithAdditionalDefaultLogging(_bstr_t("C://Samples//DefaultData"), _bstr_t("C://Samples//AppData"), _bstr_t("C://Samples//UserData"));
 			_bstr_t ip = loader->DefaultIpAddress->Ip;
-			//std::cout << "IP:" << ip << std::endl;
 			pTubeInterface = loader->GetTubeInterface(ip);
-			//InitTubeInterfaceEventSink();
-			hr = InitTubeInterfaceEventSink();
+			InitTubeInterfaceEventSink();
 
 			pDataModuleProvider = ((IDataModuleLoaderCOMPtr)loader)->GetDataModuleProvider(ip);
-
-			// we need the MessageBox, otherwise the TubeInterface is not loaded (?!?)
-			/*std::wostringstream stream;
-			stream << "Instantiating TubeInterface ...";
-			MessageBoxW(NULL, stream.str().c_str(), NULL, MB_OK);*/
-
-			printf("pTubeInterface is not NULL, IsInitialized: %s\n", pTubeInterface->IsInitialized ? "true" : "false");
-
 		}
 		catch (_com_error& ex)
 		{
-			//MessageBox(NULL, _T("Check TubeLoader.log"), NULL, MB_OK);
-			/*CString errorMessage;
-			errorMessage.Format(_T("Error: %s"), ex.ErrorMessage());
-			MessageBox(NULL, errorMessage, NULL, MB_OK);*/
-			printf("Error: %s\n", ex.ErrorMessage());
+			MessageBox(NULL, _T("Check TubeLoader.log"), NULL, MB_OK);
 		}
 	}
 	else
-		//MessageBox(NULL, _T("Error creating instance of TubeLoaderCOM. Check TubeLoader.log"), NULL, MB_OK);
-		printf("Error creating instance of TubeLoaderCOM.\n");
+		MessageBox(NULL, _T("Error creating instance of TubeLoaderCOM. Check TubeLoader.log"), NULL, MB_OK);
+
 	// ![Init ITubeInterfacePtr]
 }
 
@@ -93,7 +81,6 @@ HRESULT TubeInterfaceEventHandler::LinkEventSink(IUnknown* eventSink, const IID 
 void TubeInterfaceEventHandler::OnTubeStateChanged()
 {
 	//add userdefined code here
-	//OnStateChanged(startUpEventSink.GetEventSinkID());
 }
 
 void TubeInterfaceEventHandler::LinkEventSink(EventSinkBase* eventSink, const IID &eventsInterfacePtr, IUnknown* eventSource)
@@ -117,8 +104,6 @@ void TubeInterfaceEventHandler::LinkEventSink(EventSinkBase* eventSink, const II
 void TubeInterfaceEventHandler::OnInitialized()
 {
 	//add userdefined code here
-	printf("OnInitialized started\n");
-
 	VARIANT_BOOL isInitialized = pTubeInterface->IsInitialized;
 
 	LinkEventSink(&targetCurrentEventSink, __uuidof(ITubeCommandSingleEvents), pTubeInterface->TargetCurrent);
@@ -144,30 +129,31 @@ void TubeInterfaceEventHandler::OnInitialized()
 	LinkEventSink(&runningTimerEventSink, __uuidof(ITubeTimeSpanCOMEvents), pTubeInterface->RunningTimer);
 	LinkEventSink(&filamentStatsEventSink, __uuidof(IFilamentStatsCOMEvents), pTubeInterface->FilamentStats);
 	LinkEventSink(&turbopumpEventSink, __uuidof(ITurbopumpCommandCOMEvents), pTubeInterface->Turbopump);
+	LinkEventSink(&centerOffsetEventSink, __uuidof(ICenterOffsetCOMEvents), pTubeInterface->CenterOffset);
 
-	LinkEventSink(&centeringOneTableXEventSink, __uuidof(ICoilDataCOMEvents), pDataModuleProvider->GetCenteringOneTableX());
-	LinkEventSink(&centeringOneTableYEventSink, __uuidof(ICoilDataCOMEvents), pDataModuleProvider->GetCenteringOneTableY());
-	LinkEventSink(&vacuumDataEventSink, __uuidof(IDataModuleCOMEvents), pDataModuleProvider->GetDataModule(DataModuleName_Vacuum));
+	//LinkEventSink(&centeringOneTableXEventSink, __uuidof(ICoilDataCOMEvents), pDataModuleProvider->GetCenteringOneTableX());
+	//LinkEventSink(&centeringOneTableYEventSink, __uuidof(ICoilDataCOMEvents), pDataModuleProvider->GetCenteringOneTableY());
+	//LinkEventSink(&vacuumDataEventSink, __uuidof(IDataModuleCOMEvents), pDataModuleProvider->GetDataModule(DataModuleName_Vacuum));
 
 	SetDlgInterlock(pTubeInterface->Interlock->MonitorValue);
 	SetDlgVacuumOk(pTubeInterface->VacuumOk->MonitorValue);
 
-	printf("OnInitialized ended\n");
-	printf("pTubeInterface is not NULL, IsInitialized: %s\n", pTubeInterface->IsInitialized ? "true" : "false");
-
 	//Sample how to access tube's serial number in an easy way
-	/*_bstr_t serial = pTubeInterface->Serial;
+	_bstr_t serial = pTubeInterface->Serial;
+	_bstr_t dateOfManufacture = pTubeInterface->DateOfManufacture;
 	std::wostringstream stream;
 	stream << "Serialnumber: ";
 	stream << serial;
-	MessageBoxW(NULL, stream.str().c_str(), NULL, MB_OK);*/
+	stream << " (";
+	stream << dateOfManufacture;
+	stream << ")";
+	MessageBox(NULL, stream.str().c_str(), NULL, MB_OK);
 }
 
 void TubeInterfaceEventHandler::OnTubeInterfaceError(ULONG errorCode)
 {
 	//add userdefined code here
-	//dlg->SetError(errorCode);
-	printf("Error: %lu\n", errorCode);
+	dlg->SetError(errorCode);
 }
 
 void TubeInterfaceEventHandler::OnIsAccessibleChanged(ULONG eventSinkID)
@@ -202,6 +188,8 @@ void TubeInterfaceEventHandler::OnIsAccessibleChanged(ULONG eventSinkID)
 		OnFilamentStatsChanged();
 	else if (eventSinkID == runningTimerEventSink.GetEventSinkID())
 		OnRunningTimerChanged();
+	else if (eventSinkID == filamentAdjustInfoEventSink.GetEventSinkID())
+		OnRemainingTimeChanged(eventSinkID);
 }
 
 void TubeInterfaceEventHandler::AutoCommandInfo_AccessibleChanged()
@@ -230,8 +218,7 @@ void TubeInterfaceEventHandler::UpdateHighVoltageMonitor()
 		{
 			float highVoltageDemand = highVoltage->PcDemandValue;
 			highVoltageMonitor = highVoltage->MonitorValue;
-			//dlg->SetHighVoltageMonitor(highVoltageMonitor);
-			printf("SetHighVoltageMonitor: %f\n", highVoltageMonitor);
+			dlg->SetHighVoltageMonitor(highVoltageMonitor);
 			long highVoltageErrorCode = highVoltage->ErrorCode;
 		}
 	}
@@ -294,8 +281,7 @@ void TubeInterfaceEventHandler::UpdateTargetCurrentMonitor()
 		{
 			float targetCurrentDemand = targetCurrent->PcDemandValue;
 			targetCurrentMonitor = targetCurrent->MonitorValue;
-			//dlg->SetTargetCurrentMonitor(targetCurrentMonitor);
-			printf("SetTargetCurrentMonitor: %f\n", targetCurrentMonitor);
+			dlg->SetTargetCurrentMonitor(targetCurrentMonitor);
 			long targetErrorCode = targetCurrent->ErrorCode;
 		}
 	}
@@ -353,59 +339,17 @@ void TubeInterfaceEventHandler::OnTargetCurrentStateChanged()
 
 void TubeInterfaceEventHandler::OnStartUpStateChanged()
 {	//user defined code
-	printf("StartUp sequence entered\n");
 	if (pTubeInterface->StartUp->State == CommandStates_OK)
-		//dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("OK"));
-		printf("State: OK\n");
+		dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("OK"));
 	else if (pTubeInterface->StartUp->State == CommandStates_Acknowledged)
-		//dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Acknowledged"));
-		printf("State: Acknowledged\n");
+		dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Acknowledged"));
 	else if (pTubeInterface->StartUp->State == CommandStates_Busy)
-		//dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Busy"));
-		printf("State: Busy\n");
+		dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Busy"));
 	else if (pTubeInterface->StartUp->State == CommandStates_Warning)
-		//dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Warning"));
-		printf("State: Warning\n");
+		dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Warning"));
 	else if (pTubeInterface->StartUp->State == CommandStates_Error)
-		//dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Error"));
-		printf("State: Error\n");
+		dlg->m_edStartUpState.SetWindowTextW((LPCTSTR)_T("Error"));
 }
-
-/*void TubeInterfaceEventHandler::OnStartUpStateChanged()
-{
-    // Check if pTubeInterface or pTubeInterface->StartUp is null
-    if (!pTubeInterface || !pTubeInterface->StartUp)
-        return;
-
-    CStringA stateText;
-
-    // Map command states to corresponding strings
-    switch (pTubeInterface->StartUp->State)
-    {
-    case CommandStates_OK:
-        stateText = "OK";
-        break;
-    case CommandStates_Acknowledged:
-        stateText = "Acknowledged";
-        break;
-    case CommandStates_Busy:
-        stateText = "Busy";
-        break;
-    case CommandStates_Warning:
-        stateText = "Warning";
-        break;
-    case CommandStates_Error:
-        stateText = "Error";
-        break;
-    default:
-        stateText = "Unknown"; // Handle unknown state
-        break;
-    }
-
-    // Set the text of the edit control
-    dlg->m_edStartUpState.SetWindowTextA(stateText);
-}*/
-
 
 void TubeInterfaceEventHandler::OnPlcDemandValueChanged(ULONG eventSinkID)
 {
@@ -426,117 +370,50 @@ void TubeInterfaceEventHandler::OnTargetCurrentPlcDemandValueChanged()
 void TubeInterfaceEventHandler::OnXRayOnOffMonitorValueChanged()
 {
 	if (!pTubeInterface->XRayOn->MonitorValue && pTubeInterface->XRayOff->MonitorValue)
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS OFF"));
-		printf("XrayState: X-RAY IS OFF\n");
+		dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS OFF"));
 	else
-		//dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS ON"));
-		printf("XrayState: X-RAY IS ON\n");
+		dlg->m_lblXrayState.SetWindowTextW((LPCTSTR)_T("X-RAY IS ON"));
 }
-
-/*void TubeInterfaceEventHandler::OnXRayOnOffMonitorValueChanged()
-{
-    if (!pTubeInterface)
-        return; // Check if pTubeInterface is null
-
-    bool xRayIsOff = pTubeInterface->XRayOn && !pTubeInterface->XRayOn->MonitorValue;
-    bool xRayIsOn = pTubeInterface->XRayOff && pTubeInterface->XRayOff->MonitorValue;
-
-    if (xRayIsOff || xRayIsOn)
-    {
-        // Set the label text based on the X-ray state
-        CStringA labelTextA = xRayIsOff ? "X-RAY IS OFF" : "X-RAY IS ON";
-        dlg->m_lblXrayState.SetWindowTextA(labelTextA);
-    }
-    else
-    {
-        // Handle the case when both monitor values are not set or in an invalid state
-        dlg->m_lblXrayState.SetWindowTextA("UNKNOWN");
-    }
-}*/
-
 
 void TubeInterfaceEventHandler::OnInterlockMonitorValueChanged()
 {	//user defined code
 	SetDlgInterlock(pTubeInterface->Interlock->MonitorValue);
 }
 
-/*void TubeInterfaceEventHandler::SetDlgInterlock(VARIANT_BOOL interlockClosed)
+void TubeInterfaceEventHandler::SetDlgInterlock(VARIANT_BOOL interlockClosed)
 {
 	if (interlockClosed)
 		dlg->m_edInterlock.SetWindowTextW((LPCTSTR)_T("CLOSED"));
 	else
 		dlg->m_edInterlock.SetWindowTextW((LPCTSTR)_T("OPEN"));
-}*/
-
-void TubeInterfaceEventHandler::SetDlgInterlock(VARIANT_BOOL interlockClosed)
-{
-    if (interlockClosed)
-        //dlg->m_edInterlock.SetWindowTextA("CLOSED");
-		printf("Interlock: CLOSED\n");
-    else
-        //dlg->m_edInterlock.SetWindowTextA("OPEN");
-		printf("Interlock: OPEN\n");
 }
-
 
 void TubeInterfaceEventHandler::OnVacuumOkMonitorValueChanged()
 {	//user defined code
 	SetDlgVacuumOk(pTubeInterface->VacuumOk->MonitorValue);
 }
 
-/*void TubeInterfaceEventHandler::SetDlgVacuumOk(VARIANT_BOOL vacuumOk)
+void TubeInterfaceEventHandler::SetDlgVacuumOk(VARIANT_BOOL vacuumOk)
 {
 	if (vacuumOk)
 		dlg->m_edVacuum.SetWindowTextW((LPCTSTR)_T("OK"));
 	else
 		dlg->m_edVacuum.SetWindowTextW((LPCTSTR)_T("INSUFFICIENT"));
-}*/
-
-void TubeInterfaceEventHandler::SetDlgVacuumOk(VARIANT_BOOL vacuumOk)
-{
-	if (vacuumOk)
-		//dlg->m_edVacuum.SetWindowTextA("OK");
-		printf("Vacuum: OK\n");
-	else
-		//dlg->m_edVacuum.SetWindowTextA("INSUFFICIENT");
-		printf("Vacuum: INSUFFICIENT\n");
 }
 
-/*void TubeInterfaceEventHandler::OnCooling1OkMonitorChanged()
+void TubeInterfaceEventHandler::OnCooling1OkMonitorChanged()
 {	//user defined code
 	LPCTSTR coolingOk = GetCoolingOk(pTubeInterface->CoolingOk);
 	dlg->m_edCooling1.SetWindowTextW(coolingOk);
-}*/
-
-void TubeInterfaceEventHandler::OnCooling1OkMonitorChanged()
-{
-    // User-defined code
-    LPCTSTR coolingOk = GetCoolingOk(pTubeInterface->CoolingOk);
-
-    // Check if coolingOk is null
-    if (coolingOk)
-    {
-        //dlg->m_edCooling1.SetWindowTextA(coolingOk);
-		printf("Cooling1: OK\n");
-    }
-    else
-    {
-        // Handle the case when coolingOk is null
-        //dlg->m_edCooling1.SetWindowTextA("Unknown");
-		printf("Cooling1: Unknown\n");
-    }
 }
-
 
 void TubeInterfaceEventHandler::OnCooling2OkMonitorChanged()
 {	//user defined code
 	LPCTSTR coolingOk = GetCoolingOk(pTubeInterface->CoolingTwoOk);
-	//dlg->m_edCooling2.SetWindowTextW(coolingOk);
-	//dlg->m_edCooling2.SetWindowTextA(coolingOk);
-	printf("Cooling2: OK\n");
+	dlg->m_edCooling2.SetWindowTextW(coolingOk);
 }
 
-/*LPCTSTR TubeInterfaceEventHandler::GetCoolingOk(ITubeMonitorBool *coolingOk)
+LPCTSTR TubeInterfaceEventHandler::GetCoolingOk(ITubeMonitorBool *coolingOk)
 {
 	if (coolingOk->HasReadAccess())
 	{
@@ -545,19 +422,7 @@ void TubeInterfaceEventHandler::OnCooling2OkMonitorChanged()
 		return (LPCTSTR)_T("BAD");
 	}
 	return (LPCTSTR)_T("NOT ACCESSIBLE");
-}*/
-
-const char* TubeInterfaceEventHandler::GetCoolingOk(ITubeMonitorBool *coolingOk)
-{
-    if (coolingOk->HasReadAccess())
-    {
-        if (coolingOk->MonitorValue)
-            return "GOOD";
-        return "BAD";
-    }
-    return "NOT ACCESSIBLE";
 }
-
 
 void TubeInterfaceEventHandler::OnIsActiveChanged(ULONG eventSink)
 {	//user defined code
@@ -572,12 +437,9 @@ void TubeInterfaceEventHandler::OnFlashoverChanged()
 void TubeInterfaceEventHandler::SetFlashovers(IFlashoverCOM *flashover)
 {
 	if (flashover->HasReadAccess())
-		//dlg->SetFlashoverCount(flashover->Count);
-		printf("SetFlashoverCount: %i\n", flashover->Count);
+		dlg->SetFlashoverCount(flashover->Count);
 	else
-		//dlg->m_edFlashover.SetWindowTextW((LPCTSTR)_T("NOT ACCESSIBLE"));
-		//dlg->m_edFlashover.SetWindowTextA("NOT ACCESSIBLE");
-		printf("Flashover NOT ACCESSIBLE\n");
+		dlg->m_edFlashover.SetWindowTextW((LPCTSTR)_T("NOT ACCESSIBLE"));
 }
 
 void TubeInterfaceEventHandler::OnLockingXrayChanged()
@@ -590,8 +452,7 @@ void TubeInterfaceEventHandler::OnLockingXrayChanged()
 void TubeInterfaceEventHandler::OnListChanged(ULONG eventSinkID)
 {
 	if (eventSinkID == modeListEventSink.GetEventSinkID())
-		//OnModeListChanged();
-		printf("OnModeListChanged()\n");
+		OnModeListChanged();
 	else if (eventSinkID == defocListEventSink.GetEventSinkID())
 		OnDefocListChanged();
 	//else if (eventSinkID == targetList.GetEventSinkID())
@@ -624,12 +485,12 @@ void TubeInterfaceEventHandler::OnDefocListChanged()
 	}
 }
 
-/*void TubeInterfaceEventHandler::OnModeListChanged()
+void TubeInterfaceEventHandler::OnModeListChanged()
 {
 	FillModeList();
-}*/
+}
 
-/*void UnpackBstrArrayHelper(VARIANT* pvarArrayIn, CStringArray* pstrarrValues)
+void UnpackBstrArrayHelper(VARIANT* pvarArrayIn, CStringArray* pstrarrValues)
 {
 	if (!pstrarrValues || !pvarArrayIn || pvarArrayIn->vt == VT_EMPTY)
 		return;
@@ -724,15 +585,14 @@ void TubeInterfaceEventHandler::FillModeList()
 
 		OnModeChanged();
 	}
-}*/
+}
 
 void TubeInterfaceEventHandler::OnModeChanged()
 {
 	if (pTubeInterface->Mode->HasReadAccess())
 	{
 		int index = (int)pTubeInterface->Mode->MonitorValue;
-			//dlg->cbModes.SetCurSel(index);
-			printf("cbModes.SetCurSel: %i\n", index);
+			dlg->cbModes.SetCurSel(index);
 	}
 }
 
@@ -858,7 +718,7 @@ void TubeInterfaceEventHandler::OnError(ULONG eventSinkID, ULONG errorCode, BSTR
 	stream << errorCode;
 	stream << " aufgetreten. ";
 	stream << errorText;
-	MessageBoxW(NULL, stream.str().c_str(), NULL, MB_OK);
+	MessageBox(NULL, stream.str().c_str(), NULL, MB_OK);
 }
 
 void TubeInterfaceEventHandler::OnSaved(ULONG eventSinkID)
@@ -867,7 +727,7 @@ void TubeInterfaceEventHandler::OnSaved(ULONG eventSinkID)
 	{
 		std::wostringstream stream;
 		stream << "Vacuum data module saved.";
-		MessageBoxW(NULL, stream.str().c_str(), NULL, MB_OK);
+		MessageBox(NULL, stream.str().c_str(), NULL, MB_OK);
 	}
 }
 
@@ -918,6 +778,26 @@ void TubeInterfaceEventHandler::OnTimeChanged(ULONG eventSinkID)
 		OnRunningTimerChanged();
 }
 
+void TubeInterfaceEventHandler::OnEnabledChanged(ULONG eventSinkID)
+{
+	//Add your code here, if you want to handle a change of EnabledChanged event of PrewarningCOM
+}
+
+void TubeInterfaceEventHandler::OnOnChanged(ULONG eventSinkID)
+{
+	//Add your code here, if you want to handle a change of e.g. OnChanged event of PrewarningCOM
+}
+
+void TubeInterfaceEventHandler::OnProgressChanged(ULONG eventSinkID)
+{
+	//Add your code here, if you want to handle a change of e.g. ProgressChanged event of PrewarningCOM
+}
+
+void TubeInterfaceEventHandler::OnPlcChanged(ULONG eventSinkID)
+{
+	//Add your code here, if you want to handle a change of e.g. PlcChanged event of CenterOffsetCOM
+}
+
 void TubeInterfaceEventHandler::OnFilamentStatsChanged()
 {
 	//IFilamentStatsCOMPtr filamentStats = pTubeInterface->FilamentStats;
@@ -942,4 +822,21 @@ void TubeInterfaceEventHandler::OnRunningTimerChanged()
 	//	stream << " hours now.";
 	//	MessageBox(NULL, stream.str().c_str(), NULL, MB_OK);
 	//}
+}
+
+void TubeInterfaceEventHandler::StartConditioning()
+{
+	IConditioningSettingsCOMPtr condSettings = NULL;
+	condSettings.CreateInstance(__uuidof(ConditioningSettingsCOM));
+	condSettings->DurationInMinutes = 15;
+	condSettings->HighVoltage = 229;
+	condSettings->EmissionCurrent = 50;
+	condSettings->MaxFlashovers = 30;
+	condSettings->AlternatingConditioningEnabled = VARIANT_FALSE;
+	condSettings->FilamentAdjustEnabled = VARIANT_FALSE;
+	condSettings->LeakageCurrentTestEnabled = VARIANT_FALSE;
+	condSettings->HighVoltageStart = 30;
+	condSettings->HighVoltageStepDelayInSeconds = 1;
+	condSettings->HighVoltageStepWidth = 1;
+	pTubeInterface->Conditioning->Start(condSettings);
 }

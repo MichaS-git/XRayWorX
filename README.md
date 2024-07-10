@@ -1,6 +1,6 @@
 Dieser Treiber benötigt die dll-Dateien welche mit der Installation von X-COM (die originale XRayWorX-Software) bereitgestellt werden. Siehe auch Anleitung "X-COM_Programming_Manual".
 
-- die RegisterCOM.bat, die UnRegisterCOM.bat und ALLE .dll-Dateien aus dem Ordner C:\Program Files\X-COM nach ...\XRayWorX\XRayWorXApp\src kopieren
+- die RegisterCOM.bat, die UnRegisterCOM.bat und alle .dll-Dateien aus dem Ordner C:\Program Files\X-COM\Samples\ConnectionSampleCOM nach ...\XRayWorX\XRayWorXApp\src kopieren
 - RegisterCOM.bat als Admin ausführen
 - das EPICS-XRayWorX-Modul kompilieren
 - einen XRayWorX-IOC kompilieren 

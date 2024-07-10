@@ -47,6 +47,14 @@ record(bi,    "$(P):XrayOnOff_RBV") {
     field(SCAN, "I/O Intr")
 }
 
+record(bi,    "$(P):XrayReady_RBV") {
+    field(DTYP, "asynInt32")
+    field(INP,  "@asyn($(PORT),$(ADDR))TUBE_XRAY_READY_RBV")
+    field(ZNAM, "Not Ready")
+    field(ONAM, "Ready")
+    field(SCAN, "I/O Intr")
+}
+
 record(bi,    "$(P):Interlock_RBV") {
     field(DTYP, "asynInt32")
     field(INP,  "@asyn($(PORT),$(ADDR))TUBE_INTERLOCK_RBV")
@@ -141,4 +149,40 @@ record(ai,		"$(P):TargetPowerMonitor")
     field(PINI, "NO")
     field(PREC, 3)
     field(SCAN, "I/O Intr")
+}
+
+record(mbbo,    "$(P):XrayOutControl") {
+    field(DTYP, "asynInt32")
+    field(OUT,  "@asyn($(PORT),$(ADDR))TUBE_XRAY_OUT_CONTROL")
+    field(ZRST, "Emission Current")
+    field(ZRVL, "0")
+    field(ONST, "Target Current")
+    field(ONVL, "1")
+    field(TWST, "Target Power")
+    field(TWVL, "2")
+}
+
+### Motor-records for driving with Voltage, Current and Power
+
+record(motor, "$(P):HighVoltageMotor") {
+  field(DTYP, "Soft Channel")
+  field(OUT,  "$(P):HighVoltageDemand PP MS")
+  field(RDBL, "$(P):HighVoltageMonitor NPP MS")
+  field(URIP, "Yes")
+  field(RRES, "1")
+  field(EGU,  "kV")
+  field(DINP, "$(P):XrayReady_RBV NPP MS")
+}
+
+record(calcout, "$(P):HighVoltageMotorRBV_calc") {
+  field(CALC, "ABS(A-B)<0.05?0:1")
+  field(INPA, "$(P):HighVoltageDemand CP")
+  field(INPB, "$(P):HighVoltageMonitor CP")
+}
+
+record(calcout, "$(P):HighVoltageMotorDone") {
+  #field(CALC, "(A&B)=0?1:0")
+  field(CALC, "B=0?1:0")
+  #field(INPA, "$(P):HighVoltageMotorRBV_calc CP")
+  field(INPB, "$(P):XrayReady_RBV CP")
 }

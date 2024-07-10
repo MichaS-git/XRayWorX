@@ -1,31 +1,28 @@
 #pragma once
 #include "CommonHeader.h"
 
-class TubeCmdSingleEventSink :
+class CenterOffsetEventSink :
 	public virtual EventSinkBase,
-	public ITubeCommandSingleEvents
+	public ICenterOffsetCOMEvents
 {
 private:
-	//Member
 	static ULONG eventSinkID;
-	static const ULONG eventSinkIDOffset = 0;
+	static const ULONG eventSinkIDOffset = 20000000;
 
 public:
-	TubeCmdSingleEventSink()
+	CenterOffsetEventSink(void)
 		: EventSinkBase()
 	{
 		eventSinkID++;
 		EventSinkBase::myEventSinkID = eventSinkIDOffset + eventSinkID;
 	}
 
-	~TubeCmdSingleEventSink()
-	{
-	}
+	~CenterOffsetEventSink(){ }
 
-	// IUnknown methods.
+	// IUnknown methods
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject)
 	{
-		if (IsEqualGUID(riid, __uuidof(ITubeCommandSingleEventsPtr)))
+		if (IsEqualGUID(riid, __uuidof(ICenterOffsetCOMEventsPtr)))
 		{
 			this->AddRef();
 			*ppvObject = this;
@@ -62,51 +59,54 @@ public:
 	}
 
 	virtual HRESULT _stdcall Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
-		  DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr) 
+		DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 	{
-		switch(dispIdMember)
+		switch (dispIdMember)
 		{
-			case DispIds_IsAccessibleChanged:
-			{
-				OnIsAccessibleChanged();
-				break;
-			}
-			case DispIds_MonitorValueChanged:
-			{
-				OnMonitorValueChanged();
-				break;
-			}
-			case DispIds_DemandLowerLimitChanged:
-			{
-				OnDemandLowerLimitChanged();
-				break;
-			}
-			case DispIds_DemandUpperLimitChanged:
-			{
-				OnDemandUpperLimitChanged();
-				break;
-			}
-			case DispIds_StateChanged:
-			{
-				OnStateChanged();
-				break;
-			}
-			case DispIds_PlcDemandValueChanged:
-			{
-				OnPlcDemandValueChanged();
-				break;
-			}
-			default:
-				break;
-	   }
-	   return S_OK;
+		case DispIds_IsAccessibleChanged:
+		{
+			OnIsAccessibleChanged();
+			break;
+		}
+		case DispIds_StateChanged:
+		{
+			OnStateChanged();
+			break;
+		}
+		case DispIds_DemandLowerLimitChanged:
+		{
+			OnDemandLowerLimitChanged();
+			break;
+		}
+		case DispIds_DemandUpperLimitChanged:
+		{
+			OnDemandUpperLimitChanged();
+			break;
+		}
+		case DispIds_EnabledChanged:
+		{
+			OnEnabledChanged();
+			break;
+		}
+		case DispIds_PlcChanged:
+		{
+			OnPlcChanged();
+			break;
+		}
+		default:
+		{
+			EventSinkBase::Invoke(dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+			break;
+		}
+		}
+		return S_OK;
 	}
 
-private:
 	void OnIsAccessibleChanged();
-	void OnMonitorValueChanged();
+	void OnStateChanged();
 	void OnDemandLowerLimitChanged();
 	void OnDemandUpperLimitChanged();
-	void OnStateChanged();
-	void OnPlcDemandValueChanged();
+	void OnEnabledChanged();
+	void OnPlcChanged();
 };
+

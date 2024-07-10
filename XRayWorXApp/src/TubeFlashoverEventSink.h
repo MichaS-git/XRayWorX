@@ -66,17 +66,17 @@ public:
 	{
 		switch (dispIdMember)
 		{
-			case FlashoverCOMDispId_IsAccChngd:
+			case DispIds_IsAccessibleChanged:
 			{
 				OnIsAccessibleChanged();
 				break;
 			}
-			case FlashoverCOMDispId_CountChngd:
+			case DispIds_CountChanged:
 			{
 				OnCountChanged();
 				break;
 			}
-			case FlashoverCOMDispId_LckngXryChngd:
+			case DispIds_LockingXrayChanged:
 			{
 				OnLockingXrayChanged();
 				break;

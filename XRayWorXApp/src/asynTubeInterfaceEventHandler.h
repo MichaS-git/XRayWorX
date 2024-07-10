@@ -145,7 +145,9 @@ protected:
     int TubeStartUpState_;
     int TubeStartUp_;
     int TubeXrayOnOff_;
+    int TubeXrayOutControl_;
     int TubeXrayOnOffRBV_;
+    int TubeXrayReadyRBV_;
     int TubeInterlockRBV_;
     int TubeVacuumRBV_;
     int TubeCoolingRBV_;
@@ -230,6 +232,8 @@ private:
 	void OnTargetPowerMonitorValueChanged();
 	//XRayOn/Off event handler
 	void OnXRayOnOffMonitorValueChanged();
+	//XRayReady event handler
+	void OnXrayReadyMonitorValueChanged();
 	//Interlock event handler
 	void OnInterlockMonitorValueChanged();
 	//VacuumOk event handler
@@ -257,6 +261,7 @@ private:
 	void UpdateTargetCurrentMonitor();
 	void UpdateEmissionCurrentMonitor();
 	void UpdateTargetPowerMonitor();
+	void SetDlgXrayReady(VARIANT_BOOL xrayReady);
 	void SetDlgInterlock(VARIANT_BOOL interlockClosed);
 	void SetDlgVacuumOk(VARIANT_BOOL vacuumOk);
 	void GetCoolingOk();

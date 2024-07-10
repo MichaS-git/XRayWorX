@@ -21,10 +21,9 @@
 #include "TubeTimeSpanEventSink.h"
 #include "FilamentStatsEventSink.h"
 #include "StandbyEventSink.h"
-#include "TubeInterfaceCOMDriver.h"
-//#include "TubeInterfaceCOMDriverDlg.h"
-//#include "ConnectionSampleCOM.h"
-//#include "ConnectionSampleCOMDlg.h"
+#include "CenterOffsetEventSink.h"
+#include "ConnectionSampleCOM.h"
+#include "ConnectionSampleCOMDlg.h"
 
 using namespace XRAYWorXBaseCOM;
 using namespace XRAYWorXBase;
@@ -33,7 +32,7 @@ class TubeInterfaceEventHandler
 {
 private:
 	//Member
-	TubeInterfaceCOMDriver* dlg;
+	CConnectionSampleCOMDlg* dlg;
 	//Declare local pointer to ITubeInterface
 	// ![Declare ITubeInterfacePtr]
 	ITubeInterfacePtr pTubeInterface;
@@ -68,6 +67,7 @@ private:
 	TubeTimeSpanEventSink runningTimerEventSink;
 	FilamentStatsEventSink filamentStatsEventSink;
 	StandbyEventSink standbyEventSink;
+	CenterOffsetEventSink centerOffsetEventSink;
 	LPCONNECTIONPOINT pIConnectionPoint;
 	float highVoltageMonitor;
 	float targetCurrentMonitor;
@@ -76,7 +76,7 @@ public:
 	TubeInterfaceEventHandler(void);
 	~TubeInterfaceEventHandler(void);
 
-	void LinkDialog(TubeInterfaceCOMDriver* dialog)
+	void LinkDialog(CConnectionSampleCOMDlg* dialog)
 	{
 		dlg = dialog;
 	}
@@ -110,9 +110,6 @@ public:
 	void StartUp()
 	{
 		pTubeInterface->StartUp->PcDemandValue = true;
-		std::wostringstream stream;
-		stream << "executing StartUp!";
-		MessageBoxW(NULL, stream.str().c_str(), NULL, MB_OK);
 	}
 
 	void SetHighVoltage(float value)
@@ -130,6 +127,7 @@ public:
 	//Event handler
 	void OnTubeStateChanged();
 	void OnInitialized();
+	void StartConditioning();
 	void OnTubeInterfaceError(ULONG errorCode);
 	void OnIsAccessibleChanged(ULONG eventSinkID);
 	void OnMonitorValueChanged(ULONG eventSinkID);
@@ -162,6 +160,11 @@ public:
 	void OnStopped(ULONG eventSinkID);
 	//EventHandler for TubeTimeSpan
 	void OnTimeChanged(ULONG eventSinkID);
+	//EventHandler for Prewarning
+	void OnEnabledChanged(ULONG eventSinkID);
+	void OnOnChanged(ULONG eventSinkID);
+	void OnProgressChanged(ULONG eventSinkID);
+	void OnPlcChanged(ULONG eventSinkID);
 
 private:
 	HRESULT LinkEventSink(IUnknown* eventSink, const IID &riid);

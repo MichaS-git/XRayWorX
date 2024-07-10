@@ -1,31 +1,28 @@
 #pragma once
 #include "CommonHeader.h"
 
-class TubeCmdSingleEventSink :
+class PrewarningEventSink :
 	public virtual EventSinkBase,
-	public ITubeCommandSingleEvents
+	public IPrewarningCOMEvents
 {
 private:
-	//Member
 	static ULONG eventSinkID;
-	static const ULONG eventSinkIDOffset = 0;
+	static const ULONG eventSinkIDOffset = 1900000;
 
 public:
-	TubeCmdSingleEventSink()
+	PrewarningEventSink(void)
 		: EventSinkBase()
 	{
 		eventSinkID++;
 		EventSinkBase::myEventSinkID = eventSinkIDOffset + eventSinkID;
 	}
 
-	~TubeCmdSingleEventSink()
-	{
-	}
+	~PrewarningEventSink(void) { }
 
-	// IUnknown methods.
+	// IUnknown methods
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject)
 	{
-		if (IsEqualGUID(riid, __uuidof(ITubeCommandSingleEventsPtr)))
+		if (IsEqualGUID(riid, __uuidof(IPrewarningCOMEventsPtr)))
 		{
 			this->AddRef();
 			*ppvObject = this;
@@ -62,51 +59,42 @@ public:
 	}
 
 	virtual HRESULT _stdcall Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
-		  DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr) 
+		DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 	{
-		switch(dispIdMember)
+		switch (dispIdMember)
 		{
-			case DispIds_IsAccessibleChanged:
-			{
-				OnIsAccessibleChanged();
-				break;
-			}
-			case DispIds_MonitorValueChanged:
-			{
-				OnMonitorValueChanged();
-				break;
-			}
-			case DispIds_DemandLowerLimitChanged:
-			{
-				OnDemandLowerLimitChanged();
-				break;
-			}
-			case DispIds_DemandUpperLimitChanged:
-			{
-				OnDemandUpperLimitChanged();
-				break;
-			}
-			case DispIds_StateChanged:
-			{
-				OnStateChanged();
-				break;
-			}
-			case DispIds_PlcDemandValueChanged:
-			{
-				OnPlcDemandValueChanged();
-				break;
-			}
-			default:
-				break;
-	   }
-	   return S_OK;
+		case DispIds_IsAccessibleChanged:
+		{
+			OnIsAccessibleChanged();
+			break;
+		}
+		case DispIds_EnabledChanged:
+		{
+			OnEnabledChanged();
+			break;
+		}
+		case DispIds_OnChanged:
+		{
+			OnOnChanged();
+			break;
+		}
+		case DispIds_ProgressChanged:
+		{
+			OnProgressChanged();
+			break;
+		}
+		default:
+		{
+			EventSinkBase::Invoke(dispIdMember, riid, lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+			break;
+		}
+		}
+		return S_OK;
 	}
 
-private:
 	void OnIsAccessibleChanged();
-	void OnMonitorValueChanged();
-	void OnDemandLowerLimitChanged();
-	void OnDemandUpperLimitChanged();
-	void OnStateChanged();
-	void OnPlcDemandValueChanged();
+	void OnEnabledChanged();
+	void OnOnChanged();
+	void OnProgressChanged();
 };
+

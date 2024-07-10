@@ -6,7 +6,9 @@ static const char *driverName = "TubeInterfaceEventHandler";
 #define TubeStartUpState	        "TUBE_START_UP_STATE"
 #define TubeStartUp				    "TUBE_START_UP"
 #define TubeXrayOnOff			    "TUBE_XRAY_ONOFF"
+#define TubeXrayOutControl			"TUBE_XRAY_OUT_CONTROL"
 #define TubeXrayOnOff_RBV		    "TUBE_XRAY_ONOFF_RBV"
+#define TubeXrayReady_RBV		    "TUBE_XRAY_READY_RBV"
 #define TubeInterlock_RBV		    "TUBE_INTERLOCK_RBV"
 #define TubeVacuum_RBV		        "TUBE_VACUUM_RBV"
 #define TubeCooling_RBV		        "TUBE_COOLING_RBV"
@@ -179,6 +181,7 @@ void TubeInterfaceEventHandler::OnInitialized()
 	SetDlgInterlock(pTubeInterface->Interlock->MonitorValue);
 	SetDlgVacuumOk(pTubeInterface->VacuumOk->MonitorValue);
 	GetCoolingOk();
+	SetDlgXrayReady(pTubeInterface->XrayReady->MonitorValue);
 
 	if (pTubeInterface->IsInitialized) {
         setIntegerParam(TubeInitializeRBV_, 1);
@@ -318,6 +321,8 @@ void TubeInterfaceEventHandler::OnMonitorValueChanged(ULONG eventSinkID)
 	else if (eventSinkID == xRayOffEventSink.GetEventSinkID() ||
 		eventSinkID == xRayOnEventSink.GetEventSinkID())
 		OnXRayOnOffMonitorValueChanged();
+	else if (eventSinkID == xRayReadyEventSink.GetEventSinkID())
+		OnXrayReadyMonitorValueChanged();
 	else if (eventSinkID == interlockEventSink.GetEventSinkID())
 		OnInterlockMonitorValueChanged();
 	else if (eventSinkID == vacuumOkEventSink.GetEventSinkID())
@@ -494,6 +499,21 @@ void TubeInterfaceEventHandler::OnXRayOnOffMonitorValueChanged()
 	} else {
 		setIntegerParam(TubeXrayOnOffRBV_, 1);
 	}
+    callParamCallbacks();
+}
+
+void TubeInterfaceEventHandler::OnXrayReadyMonitorValueChanged()
+{	//user defined code
+	SetDlgXrayReady(pTubeInterface->XrayReady->MonitorValue);
+}
+
+void TubeInterfaceEventHandler::SetDlgXrayReady(VARIANT_BOOL xrayReady)
+{
+    if (xrayReady) {
+        setIntegerParam(TubeXrayReadyRBV_, 1);
+    } else {
+        setIntegerParam(TubeXrayReadyRBV_, 0);
+    }
     callParamCallbacks();
 }
 
@@ -1009,6 +1029,11 @@ asynStatus TubeInterfaceEventHandler::writeInt32(asynUser *pasynUser, epicsInt32
             SwitchXRayOff();
         }
     }
+    if (function == TubeXrayOutControl_) {
+        if (value < 3) {
+            pTubeInterface->XrayOutControl->PutPcDemandValue(static_cast<XRAYWorXBase::XrayOutControls>(value));
+        }
+    }
 
     callParamCallbacks(addr);
 
@@ -1125,7 +1150,9 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName, char 
     createParam(TubeStartUpState,			asynParamInt32,		&TubeStartUpState_);
     createParam(TubeStartUp,			    asynParamInt32,		&TubeStartUp_);
     createParam(TubeXrayOnOff,			    asynParamInt32,		&TubeXrayOnOff_);
+    createParam(TubeXrayOutControl,			asynParamInt32,		&TubeXrayOutControl_);
     createParam(TubeXrayOnOff_RBV,			asynParamInt32,		&TubeXrayOnOffRBV_);
+    createParam(TubeXrayReady_RBV,			asynParamInt32,		&TubeXrayReadyRBV_);
     createParam(TubeInterlock_RBV,			asynParamInt32,		&TubeInterlockRBV_);
     createParam(TubeVacuum_RBV,			    asynParamInt32,		&TubeVacuumRBV_);
     createParam(TubeCooling_RBV,			asynParamInt32,		&TubeCoolingRBV_);
@@ -1141,6 +1168,10 @@ TubeInterfaceEventHandler::TubeInterfaceEventHandler(const char *portName, char 
     strncpy(filesPath, configFilesPath, sizeof(filesPath) - 1); // Copy the string safely
 
     setIntegerParam(TubeInitializeRBV_, 0);
+    // set StartUp state to an empty String for now
+    setIntegerParam(TubeStartUpState_, 5);
+    // set XrayOutControl to an empty String for now
+    //setIntegerParam(TubeXrayOutControl_, 3);
     callParamCallbacks();
 
     /* launch initialize task */
@@ -1170,11 +1201,11 @@ static void configCallFunc(const iocshArgBuf *args)
     TubeInterfaceEventHandlerConfig(args[0].sval, args[1].sval);
 }
 
-void drvTubeInterfaceEventHandlerRegister(void)
+void TubeInterfaceEventHandlerRegister(void)
 {
     iocshRegister(&configFuncDef,configCallFunc);
 }
 
 extern "C" {
-    epicsExportRegistrar(drvTubeInterfaceEventHandlerRegister);
+    epicsExportRegistrar(TubeInterfaceEventHandlerRegister);
 }

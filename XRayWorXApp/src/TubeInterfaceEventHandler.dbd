@@ -4,4 +4,4 @@
 #driver(myDriver)
 #registrar(myRegistrar)
 #variable(myVariable)
-registrar(drvTubeInterfaceEventHandlerRegister)
+registrar(TubeInterfaceEventHandlerRegister)

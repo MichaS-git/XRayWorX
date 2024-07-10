@@ -3,7 +3,7 @@
 
 class AutoCommandInfoEventSink :
 	public virtual EventSinkBase,
-	public ITubeAutoCommandCOMEvents
+	public IAutoCommandInfosCOMEvents
 {
 private:
 	//Member
@@ -25,7 +25,8 @@ public:
 	// IUnknown methods.
 	virtual HRESULT __stdcall QueryInterface(REFIID riid, void **ppvObject)
 	{
-		if (IsEqualGUID(riid, __uuidof(ITubeAutoCommandCOMEventsPtr)))
+		//if (IsEqualGUID(riid, __uuidof(ITubeAutoCommandCOMEventsPtr)))
+		if (IsEqualGUID(riid, __uuidof(IAutoCommandInfosCOMEventsPtr)))
 		{
 			this->AddRef();
 			*ppvObject = this;
